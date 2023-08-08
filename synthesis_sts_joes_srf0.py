@@ -1,3 +1,4 @@
+# packages used
 import warnings
 warnings.filterwarnings("ignore")
 import os
@@ -11,30 +12,37 @@ import pandas as pd
 import librosa
 import ipywidgets as widgets
 from torch import nn
-from model import Tacotron2
-from layers import TacotronSTFT, STFT
 from scipy.io import wavfile
-from train import load_model
-from text import text_to_sequence
 from IPython.display import display, HTML
 display(HTML("<style>div.output_scroll { height: 42em; }</style>"))
 g2p = G2p()
 import os
 import json
-from hfgn.env import AttrDict
-from hfgn.models import Generator
-from hifigandenoiser import Denoiser
-MAX_WAV_VALUE = 32768.0
-device = 'cuda'
 import math
 import sys
-mos_dir = "./mos_ssl/"
-sys.path.append(mos_dir)
-from infer_util import *
 from tqdm.notebook import tqdm
 
+# Tacotron2
+from tronduo.model import Tacotron2
+from tronduo.layers import TacotronSTFT, STFT
+from tronduo.model_util import load_model
+from tronduo import text_to_sequence
+
+# HiFi-GAN
+from hifigan.env import AttrDict
+from hifigan.models import Generator
+from tronduo.hifigandenoiser import Denoiser
+MAX_WAV_VALUE = 32768.0
+device = 'cuda'
+
+# ssl_mos
+mos_dir = "./models/mos_ssl/"
+#sys.path.append(mos_dir)
+from mos_ssl.infer_util import *
+
+
 # load generic parameters
-from hparams import create_hparams
+from tronduo.hparams import create_hparams
 hparams = create_hparams()
 hparams.global_mean = None
 hparams.distributed_run = False
@@ -46,7 +54,7 @@ hparams.speaker_embedding_dim = 8
 class Config:
     def __init__(self):
         # Tacotron
-        self.tacotron_checkpoint_path = 'output/joe_srf0/'
+        self.tacotron_checkpoint_path = 'models/tronduo/joe_srf0/'
         self.tacotron_iterations = '100000'
         # prosodic control
         self.prosodic = True
@@ -58,7 +66,7 @@ class Config:
         self.speaker_ids = ['read speech', 'spontaneous'] # nr of items should match n_speakers
         
         # HiFi-GAN
-        self.hifigan_checkpoint_path = 'hfgn/jblrc/'
+        self.hifigan_checkpoint_path = 'models/hifigan/jblrc/'
         self.hifigan_iterations = 3860000
 
 
@@ -134,7 +142,7 @@ def synth(b):
     # generate samples
     total_iterations=boxdict['spk_steps'].value*boxdict['feat_steps'].value*boxdict['feat_steps'].value
     print(f'Generating {total_iterations} samples...')
-    pbar = tqdm(total=total_iterations)
+    pbar = tqdm.tqdm(total=total_iterations)
     with torch.no_grad():
         for spk in spk_steps:
             for j in sp_steps:
@@ -165,7 +173,7 @@ def synth(b):
                                                            
     # run ssl_mos
     print(f'Running evaluation...')
-    for i in tqdm(range(len(results))):
+    for i in tqdm.tqdm(range(len(results))):
         audio = torch.tensor(results["wav"][i], dtype=torch.float32).to(device).unsqueeze(0)
         audio = torchaudio.functional.resample(audio, hparams.sampling_rate, 16000)
         with torch.no_grad():
