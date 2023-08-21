@@ -54,7 +54,7 @@ hparams.speaker_embedding_dim = 8
 class Config:
     def __init__(self):
         # Tacotron
-        self.tacotron_checkpoint_path = 'models/tronduo/joe_srf0/'
+        self.tacotron_checkpoint_path = 'models/tronduo/'
         self.tacotron_iterations = '100000'
         # prosodic control
         self.prosodic = True
@@ -66,7 +66,7 @@ class Config:
         self.speaker_ids = ['read speech', 'spontaneous'] # nr of items should match n_speakers
         
         # HiFi-GAN
-        self.hifigan_checkpoint_path = 'models/hifigan/jblrc/'
+        self.hifigan_checkpoint_path = 'models/hifigan/'
         self.hifigan_iterations = 3860000
 
 
